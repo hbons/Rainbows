@@ -66,8 +66,8 @@ namespace Rainbows {
                 while ((current_chunk_size = stream.Read (buffer, 0, buffer.Length)) > 0)
                 {
                     string hash                 = Cryptographer.SHA1 (buffer);
-                    string chunk_file_name      = hash;
-                    string chunk_container      = chunk_file_name.Substring (6, 2);
+                    string chunk_file_name      = hash.Substring (2);
+                    string chunk_container      = hash.Substring (0, 2);
                     string chunk_container_path = Path.Combine (OutputDirectory, chunk_container);
                     string chunk_file_path      = Path.Combine (chunk_container_path, chunk_file_name);
 
@@ -75,14 +75,22 @@ namespace Rainbows {
                         if (!Directory.Exists (chunk_container_path))
                             Directory.CreateDirectory (chunk_container_path);
 
-                        if (this.cryptographer != null)
-                            buffer = this.cryptographer.Encrypt (buffer);
+                        if (this.cryptographer != null) {
+                            byte [] crypto_buffer = this.cryptographer.Encrypt (buffer);
+                            File.WriteAllBytes (chunk_file_path, crypto_buffer);
 
-                        File.WriteAllBytes (chunk_file_path, buffer);
+                        } else {
+                            File.WriteAllBytes (chunk_file_path, buffer);
+                        }
+
+                        if (ChunkCreated != null)
+                            ChunkCreated (chunk_file_path, current_chunk_size, hash);
+
+                        Console.WriteLine ("Chunk " + hash + " created");
+
+                    } else {
+                        Console.WriteLine ("Chunk " + hash + " exists");
                     }
-
-                    if (ChunkCreated != null)
-                        ChunkCreated (chunk_file_path, current_chunk_size, hash);
 
                     chunk_number++;
                 }

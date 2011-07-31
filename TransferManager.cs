@@ -16,12 +16,41 @@
 
 
 using System;
+using System.Diagnostics;
 
 namespace Rainbows {
 
     public class TransferManager {
 
-        public TransferManager (string path)
+        Process rsync_process = new Process ();
+
+
+        public TransferManager (string path, string remote_path)
+        {
+            this.rsync_process.StartInfo.FileName  = "rsync";
+            this.rsync_process.StartInfo.Arguments = "--ignore-existing " +
+                "--recursive " +
+                "--whole-file " + // Don't do delta sync
+                "--progress " +
+                path + " " + remote_path;
+
+            this.rsync_process.EnableRaisingEvents = true;
+
+            this.rsync_process.StartInfo.RedirectStandardOutput = false;
+            this.rsync_process.StartInfo.UseShellExecute        = false;
+            this.rsync_process.StartInfo.WorkingDirectory       = path;
+        }
+
+
+        public void UploadObjects ()
+        {
+            Console.WriteLine (this.rsync_process.StartInfo.Arguments);
+            this.rsync_process.Start ();
+            this.rsync_process.WaitForExit ();
+        }
+
+
+        public void DownloadObjects (string [] hashes)
         {
 
         }
