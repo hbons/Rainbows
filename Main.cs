@@ -44,20 +44,22 @@ namespace Rainbows
             List<string> chunk_paths = new List<string> ();
             List<string> hashes      = new List<string> ();
 
+            TransferManager transfer_manager = new TransferManager (LocalPath + "/", "/Users/hbons/rsync-test");
+
             chunker.ChunkCreated += delegate (string chunk_file_path, int chunk_size, string chunk_hash) {
              //   Console.WriteLine ("Created: " + chunk_file_path + " (" + chunk_size + " bytes)");
                 chunk_paths.Add (chunk_file_path);
                 hashes.Add (chunk_hash);
-                // Upload files
+
+
+                transfer_manager.QueueUpload ();
             };
 
-            chunker.FileToChunks ("/Users/hbons/Thunderbird.dmg");
+            chunker.FileToChunks ("/Users/hbons/hp2.avi");
 
-            Blobs blobs = new Blobs ("Users/hbons/SparkleShare/Rainbows/.sparkleshare");
-            blobs.Store ("hp.avi", hashes.ToArray ());
+          //  Blobs blobs = new Blobs ("Users/hbons/SparkleShare/Rainbows/.sparkleshare");
+            //blobs.Store ("hp.avi", hashes.ToArray ());
 
-            TransferManager transfer_manager = new TransferManager (LocalPath + "/", "/Users/hbons/rsync-test");
-            transfer_manager.UploadObjects ();
 
             s.Stop ();
             Console.WriteLine ("Total time: " + (int) s.Elapsed.TotalSeconds + " seconds");

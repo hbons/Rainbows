@@ -17,25 +17,26 @@
 
 using System;
 using System.Diagnostics;
+using System.Threading;
 
 namespace Rainbows {
 
     public class TransferManager {
 
-        Process rsync_process = new Process ();
+        private bool queued_upload = false;
+        private bool busy          = false;
+        private Process rsync_process = new Process ();
 
 
         public TransferManager (string path, string remote_path)
         {
             this.rsync_process.StartInfo.FileName  = "rsync";
-            this.rsync_process.StartInfo.Arguments = "--ignore-existing " +
-                "--recursive " +
-                "--whole-file " + // Don't do delta sync
-                "--progress " +
-                path + " " + remote_path;
+            this.rsync_process.StartInfo.Arguments = "--ignore-existing --bwlimit=500 " +
+                "--recursive --whole-file --progress " + path + " " + remote_path;
 
-            this.rsync_process.EnableRaisingEvents = true;
+            Console.WriteLine (this.rsync_process.StartInfo.Arguments);
 
+            this.rsync_process.EnableRaisingEvents              = true;
             this.rsync_process.StartInfo.RedirectStandardOutput = false;
             this.rsync_process.StartInfo.UseShellExecute        = false;
             this.rsync_process.StartInfo.WorkingDirectory       = path;
@@ -44,9 +45,28 @@ namespace Rainbows {
 
         public void UploadObjects ()
         {
-            Console.WriteLine (this.rsync_process.StartInfo.Arguments);
+            this.busy = true;
+
             this.rsync_process.Start ();
             this.rsync_process.WaitForExit ();
+
+            this.busy = false;
+        }
+
+
+        public void QueueUpload ()
+        {
+            if (!this.busy) {
+                Thread thread = new Thread (
+                    new ThreadStart (
+                        delegate {
+                            UploadObjects ();
+                        }
+                    )
+                );
+
+                thread.Start ();
+            }
         }
 
 
