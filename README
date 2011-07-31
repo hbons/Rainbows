@@ -10,3 +10,4 @@ Benefits:
           in the local history anymore but are on the host
 	- Client side encryption
 	- Resumable transfers
+        - Using any kind of storage with write access
