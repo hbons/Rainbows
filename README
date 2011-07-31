@@ -1,0 +1,13 @@
+This is an attempt to create a backend designed specifically 
+for SparkleShare's use case to balance out the disadvantages of
+using Git which is the current default in SparkleShare.
+
+It takes inspiration and ideas from both Git and Syncany.
+
+Focus:
+	- Limiting local history to a period
+	- Restoring/reverting to file revisions that are not
+          in the local history anymore but are on the host
+	- Client side encryption
+	- Resumable transfers
+
