@@ -12,3 +12,4 @@ Benefits over Git:
 	- Resumable transfers
         - Using any kind of storage with write access
         - Store empty folders
+        - Follow symlinks
