@@ -4,7 +4,7 @@ using Git which is the current default in SparkleShare.
 
 It takes inspiration and ideas from both Git and Syncany.
 
-Focus:
+Benefits:
 	- Limiting local history to a period
 	- Restoring/reverting to file revisions that are not
           in the local history anymore but are on the host
