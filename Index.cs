@@ -22,9 +22,20 @@ using System.Text;
 
 namespace Rainbows {
 
-    public class Repository {
+    public class Index {
 
-        public Repository (string path)
+        public readonly string DatabasePath;
+        public readonly string CheckoutPath;
+
+
+        public Index (string database_path, string checkout_path)
+        {
+            DatabasePath = database_path;
+            CheckoutPath = checkout_path;
+        }
+
+
+        public void Status ()
         {
 
         }
@@ -32,25 +43,71 @@ namespace Rainbows {
 
         public void Commit ()
         {
-            // - Walk the new tree and create blobs, trees
-            // - Create new commit object: 'current' file is ParentHash,
+            Chunker chunker = new Chunker (DatabasePath,
+                new Cryptographer ("cGFzc3dvcmQAAAAAAAAAAA=="));
+
+            TransferManager transfer_manager = new TransferManager (
+                DatabasePath, "/Users/hbons/rsync-test");
+
+            chunker.ChunkCreated += delegate (string chunk_file_path, int chunk_size,
+                                              string chunk_hash) {
+
+                transfer_manager.QueueUpload ();
+            };
+
+            chunker.ChunkingFinished += delegate {
+                // - Walk the new tree and create blobs, trees
+
+            };
+
+            chunker.FileToChunks (new string [] {"/Users/hbons/hp2.avi"});
+
+
             // - Update 'current' file
         }
 
 
-        public void Push ()
+        public void Checkout (string commit_hash)
         {
 
         }
 
 
-        public void Pull ()
+        public bool Push ()
         {
+            return true;
+        }
 
+
+        public void PullAndRebase ()
+        {
+            // TODO: 1. Get the latest HEAD commit from the server
+            // 2. Parse the tree and download all the objects we don't have
+
+            TransferManager transfer_manager = new TransferManager (
+                DatabasePath, "/Users/hbons/rsync-test");
+
+            string [] new_remote_objects = new string [0];
+            transfer_manager.DownloadObjects (new_remote_objects);
+        }
+
+
+        public static Index Init (string path)
+        {
+            if (!Directory.Exists (path))
+                Directory.CreateDirectory (path);
+
+            string database_path = Path.Combine (path, ".sparkleshare");
+
+            if (!Directory.Exists (database_path))
+                Directory.CreateDirectory (database_path);
+
+            return new Index (database_path, path);
         }
     }
 
-    // TODO: integrate into Repository
+
+    // TODO: integrate into Index
      public class Blobs {
 
         public readonly string OutputDirectory;
@@ -67,6 +124,7 @@ namespace Rainbows {
 
         public void Store (string file_name, string [] chunk_hashes)
         {
+            // TODO: we really need the file hash
             string hash            = string.Join ("", chunk_hashes);
             string file_store_name = Cryptographer.SHA1 (Encoding.ASCII.GetBytes (hash));
 
@@ -84,6 +142,7 @@ namespace Rainbows {
                         byte [] buffer = Encoding.ASCII.GetBytes (chunk_hash + "\n");
                         stream.Write (buffer, 0, buffer.Length);
                     }
+                    
                     Console.WriteLine ("Created: " + file_store_path);
                 }
             }

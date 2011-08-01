@@ -37,8 +37,8 @@
     <Compile Include="Cryptographer.cs" />
     <Compile Include="Chunker.cs" />
     <Compile Include="Objects.cs" />
-    <Compile Include="Repository.cs" />
     <Compile Include="TransferManager.cs" />
+    <Compile Include="Index.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System" />

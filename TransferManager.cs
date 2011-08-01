@@ -17,29 +17,43 @@
 
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Threading;
 
 namespace Rainbows {
 
     public class TransferManager {
 
-        private bool queued_upload = false;
-        private bool busy          = false;
-        private Process rsync_process = new Process ();
+        public delegate void UploadFinishedHandler ();
+        public event UploadFinishedHandler UploadFinished;
+
+        private bool queued_upload    = false;
+        private bool busy             = false;
+        private Process upload_process = new Process ();
+        private Process download_process = new Process ();
 
 
         public TransferManager (string path, string remote_path)
         {
-            this.rsync_process.StartInfo.FileName  = "rsync";
-            this.rsync_process.StartInfo.Arguments = "--ignore-existing --bwlimit=500 " +
+            if (!path.EndsWith ("" + Path.DirectorySeparatorChar))
+                path += Path.DirectorySeparatorChar;
+
+            this.upload_process.EnableRaisingEvents              = true;
+            this.upload_process.StartInfo.RedirectStandardOutput = false;
+            this.upload_process.StartInfo.UseShellExecute        = false;
+            this.upload_process.StartInfo.WorkingDirectory       = path;
+            this.upload_process.StartInfo.FileName               = "rsync";
+            this.upload_process.StartInfo.Arguments              = "--ignore-existing " +
+                "--bwlimit=1000 --recursive --whole-file --progress --exclude=HEAD " + path +
+                " " + remote_path;
+
+            this.download_process.EnableRaisingEvents              = true;
+            this.download_process.StartInfo.RedirectStandardOutput = false;
+            this.download_process.StartInfo.UseShellExecute        = false;
+            this.download_process.StartInfo.WorkingDirectory       = path;
+            this.download_process.StartInfo.FileName  = "rsync";
+            this.download_process.StartInfo.Arguments = "--ignore-existing --bwlimit=1000 " +
                 "--recursive --whole-file --progress " + path + " " + remote_path;
-
-            Console.WriteLine (this.rsync_process.StartInfo.Arguments);
-
-            this.rsync_process.EnableRaisingEvents              = true;
-            this.rsync_process.StartInfo.RedirectStandardOutput = false;
-            this.rsync_process.StartInfo.UseShellExecute        = false;
-            this.rsync_process.StartInfo.WorkingDirectory       = path;
         }
 
 
@@ -47,10 +61,15 @@ namespace Rainbows {
         {
             this.busy = true;
 
-            this.rsync_process.Start ();
-            this.rsync_process.WaitForExit ();
+            this.upload_process.Start ();
+            this.upload_process.WaitForExit ();
 
             this.busy = false;
+
+            if (this.queued_upload) {
+                this.queued_upload = false;
+                UploadObjects ();
+            }
         }
 
 
@@ -66,6 +85,9 @@ namespace Rainbows {
                 );
 
                 thread.Start ();
+
+            } else {
+                this.queued_upload = true;
             }
         }
 

@@ -22,47 +22,16 @@ using System.IO;
 using System.Text;
 using System.Xml;
 
-namespace Rainbows
-{
-    public class Rainbows
-    {
-        public static string RemoteUrl = "ssh://localhost:/Users/hbons/TestTest";
-        public static string LocalPath = "/Users/hbons/SparkleShare/Rainbows/.sparkleshare";
+namespace Rainbows {
+
+    public class Rainbows {
 
         public static void Main (string [] args)
         {
-            //
-            // PLAYING GROUND
-            //
+            Index index = new Index ("/Users/hbons/SparkleShare/Rainbows/.sparkleshare",
+                "/Users/hbons/SparkleShare/Rainbows");
 
-            Stopwatch s = new Stopwatch ();
-            s.Start ();
-
-            Chunker chunker = new Chunker ("/Users/hbons/SparkleShare/Rainbows/.sparkleshare",
-                new Cryptographer ("cGFzc3dvcmQAAAAAAAAAAA=="));
-
-            List<string> chunk_paths = new List<string> ();
-            List<string> hashes      = new List<string> ();
-
-            TransferManager transfer_manager = new TransferManager (LocalPath + "/", "/Users/hbons/rsync-test");
-
-            chunker.ChunkCreated += delegate (string chunk_file_path, int chunk_size, string chunk_hash) {
-             //   Console.WriteLine ("Created: " + chunk_file_path + " (" + chunk_size + " bytes)");
-                chunk_paths.Add (chunk_file_path);
-                hashes.Add (chunk_hash);
-
-
-                transfer_manager.QueueUpload ();
-            };
-
-            chunker.FileToChunks ("/Users/hbons/hp2.avi");
-
-          //  Blobs blobs = new Blobs ("Users/hbons/SparkleShare/Rainbows/.sparkleshare");
-            //blobs.Store ("hp.avi", hashes.ToArray ());
-
-
-            s.Stop ();
-            Console.WriteLine ("Total time: " + (int) s.Elapsed.TotalSeconds + " seconds");
+            index.Status ();
         }
     }
 }
