@@ -24,8 +24,15 @@ namespace Rainbows {
 
     public class TransferManager {
 
-        public delegate void UploadFinishedHandler ();
-        public event UploadFinishedHandler UploadFinished;
+//        public delegate void UploadFinishedHandler ();
+//        public event UploadFinishedHandler UploadFinished;
+
+        public delegate void DownloadFinishedHandler ();
+        public event DownloadFinishedHandler DownloadFinished;
+
+        public int BandwidthLimitKbps = 1500;
+        public readonly string DatabasePath;
+        public readonly string RemotePath;
 
         private bool queued_upload    = false;
         private bool busy             = false;
@@ -33,27 +40,28 @@ namespace Rainbows {
         private Process download_process = new Process ();
 
 
-        public TransferManager (string path, string remote_path)
+        public TransferManager (string database_path, string remote_path)
         {
-            if (!path.EndsWith ("" + Path.DirectorySeparatorChar))
-                path += Path.DirectorySeparatorChar;
+            if (!database_path.EndsWith ("" + Path.DirectorySeparatorChar))
+                database_path += Path.DirectorySeparatorChar;
+
+            DatabasePath = database_path;
+            RemotePath   = remote_path;
 
             this.upload_process.EnableRaisingEvents              = true;
             this.upload_process.StartInfo.RedirectStandardOutput = false;
             this.upload_process.StartInfo.UseShellExecute        = false;
-            this.upload_process.StartInfo.WorkingDirectory       = path;
+            this.upload_process.StartInfo.WorkingDirectory       = database_path;
             this.upload_process.StartInfo.FileName               = "rsync";
             this.upload_process.StartInfo.Arguments              = "--ignore-existing " +
-                "--bwlimit=1000 --recursive --whole-file --progress --exclude=HEAD " + path +
-                " " + remote_path;
+                "--bwlimit=" + BandwidthLimitKbps + " --recursive --whole-file --progress " +
+                "--exclude=HEAD " + DatabasePath + " " + RemotePath;
 
             this.download_process.EnableRaisingEvents              = true;
             this.download_process.StartInfo.RedirectStandardOutput = false;
             this.download_process.StartInfo.UseShellExecute        = false;
-            this.download_process.StartInfo.WorkingDirectory       = path;
+            this.download_process.StartInfo.WorkingDirectory       = database_path;
             this.download_process.StartInfo.FileName  = "rsync";
-            this.download_process.StartInfo.Arguments = "--ignore-existing --bwlimit=1000 " +
-                "--recursive --whole-file --progress " + path + " " + remote_path;
         }
 
 
@@ -70,6 +78,9 @@ namespace Rainbows {
                 this.queued_upload = false;
                 UploadObjects ();
             }
+
+//            if (UploadFinished != null)
+//                UploadFinished ();
         }
 
 
@@ -94,7 +105,23 @@ namespace Rainbows {
 
         public void DownloadObjects (string [] hashes)
         {
+            foreach (string hash in hashes) {
+                string remote_object_path = RemotePath + "objects" + "/" +
+                    hash.Substring (0, 2) + "/" + hash.Substring (2);
 
+                string target_object_path = DatabasePath + "objects" + "/" +
+                    hash.Substring (0, 2) + "/" + hash.Substring (2);
+
+                this.download_process.StartInfo.Arguments = "--bwlimit=" + BandwidthLimitKbps +
+                    " --recursive --whole-file --progress " + remote_object_path + " " +
+                    target_object_path;
+
+                this.download_process.Start ();
+                this.download_process.WaitForExit ();
+            }
+
+            if (DownloadFinished != null)
+                DownloadFinished ();
         }
     }
 }
