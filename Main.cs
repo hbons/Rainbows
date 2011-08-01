@@ -32,6 +32,7 @@ namespace Rainbows {
                 "/Users/hbons/SparkleShare/Rainbows");
 
             index.Status ();
+            index.Commit ();
         }
     }
 }

@@ -62,7 +62,7 @@ namespace Rainbows {
             int chunk_size = 1024 * 1024 * 4;
             List <string> chunk_paths = new List<string> ();
 
-            // TODO: threads
+            // TODO: threadpool
             foreach (string source_file_path in source_file_paths) {
 
                 using (FileStream stream = File.OpenRead (source_file_path))

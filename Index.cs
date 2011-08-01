@@ -22,6 +22,7 @@ using System.Text;
 
 namespace Rainbows {
 
+    // TODO: all methods here need to block
     public class Index {
 
         public readonly string DatabasePath;
@@ -37,7 +38,7 @@ namespace Rainbows {
 
         public void Status ()
         {
-
+            // TODO compare the checkout with the HEAD tree
         }
 
 
@@ -56,25 +57,32 @@ namespace Rainbows {
             };
 
             chunker.ChunkingFinished += delegate {
-                // - Walk the new tree and create blobs, trees
-
+                transfer_manager.QueueUpload ();
             };
 
+
+            // TODO: needs to block
             chunker.FileToChunks (new string [] {"/Users/hbons/hp2.avi"});
 
-
-            // - Update 'current' file
+            // TODO: Walk the new tree and create blobs, trees, commit
+            // - Update HEAD file
         }
 
 
         public void Checkout (string commit_hash)
         {
+            Chunker chunker = new Chunker (DatabasePath,
+                new Cryptographer ("cGFzc3dvcmQAAAAAAAAAAA=="));
 
+            // TODO: walk the HEAD tree
+            //chunker.ChunksToFile (chunks, path);
         }
 
 
         public bool Push ()
         {
+            // TODO: check if the remote HEAD doesn't conflict
+
             return true;
         }
 
@@ -89,6 +97,14 @@ namespace Rainbows {
 
             string [] new_remote_objects = new string [0];
             transfer_manager.DownloadObjects (new_remote_objects);
+
+            // TODO: rebase
+        }
+
+
+        public void CollectGarbage ()
+        {
+            // TODO: Remove all objects that are not in the current HEAD and are older than a week
         }
 
 
@@ -142,7 +158,7 @@ namespace Rainbows {
                         byte [] buffer = Encoding.ASCII.GetBytes (chunk_hash + "\n");
                         stream.Write (buffer, 0, buffer.Length);
                     }
-                    
+
                     Console.WriteLine ("Created: " + file_store_path);
                 }
             }
