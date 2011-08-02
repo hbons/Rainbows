@@ -23,19 +23,6 @@ using System.Text;
 
 namespace Rainbows.Objects {
 
-    public class Commit {
-
-        public string Hash;
-        public string ParentHash;
-
-        public string UserName;
-        public string UserEmail;
-        public DateTime Timestamp;
-
-        public Tree Tree;
-    }
-
-
     public abstract class HashObject {
 
         public static string DatabasePath;
@@ -71,6 +58,28 @@ namespace Rainbows.Objects {
         protected byte [] ToBytes (string line)
         {
             return ASCIIEncoding.ASCII.GetBytes (line);
+        }
+    }
+
+
+    public class Commit : HashObject {
+
+        public string ParentHash;
+
+        public string UserName;
+        public string UserEmail;
+        public DateTime Timestamp;
+
+
+        public Commit (string hash) : base (hash)
+        {
+        }
+
+
+        public Tree Tree {
+            get {
+                return null;
+            }
         }
     }
 
