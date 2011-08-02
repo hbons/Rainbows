@@ -17,8 +17,11 @@
 
 using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using System.Text;
 
-namespace Rainbows {
+namespace Rainbows.Objects {
 
     public class Commit {
 
@@ -33,10 +36,53 @@ namespace Rainbows {
     }
 
 
-    public class Tree {
+    public abstract class HashObject {
 
+        public static string DatabasePath;
         public string Hash;
+
+        public HashObject (string hash)
+        {
+            Hash = hash;
+        }
+
+
+        protected byte [] ReadHashObject (string hash)
+        {
+            string file_path = Path.Combine (DatabasePath, "objects",
+                hash.Substring (0, 2), hash.Substring (2));
+
+            return File.ReadAllBytes (file_path);;
+        }
+
+
+        protected void WriteHashObject (string hash, byte [] buffer)
+        {
+        }
+
+
+        protected string [] ToLines (byte [] buffer)
+        {
+            string line = ASCIIEncoding.ASCII.GetString (buffer);
+            return line.Split ("\n".ToCharArray (), StringSplitOptions.RemoveEmptyEntries);
+        }
+
+
+        protected byte [] ToBytes (string line)
+        {
+            return ASCIIEncoding.ASCII.GetBytes (line);
+        }
+    }
+
+
+    public class Tree : HashObject {
+
         public string Path;
+
+
+        public Tree (string hash) : base (hash)
+        {
+        }
 
 
         // Key:   blob hash
@@ -58,20 +104,39 @@ namespace Rainbows {
     }
 
 
-    public class Blob {
+    public class Blob : HashObject {
 
-        public string Hash;
+        public Blob (string hash) : base (hash)
+        {
+        }
+
 
         public Chunk [] Chunks {
             get {
-                return null;
+                byte [] buffer         = ReadHashObject (Hash);
+                string [] chunk_hashes = ToLines (buffer);
+                List<Chunk> chunks     = new List<Chunk> ();
+
+                foreach (string chunk_hash in chunk_hashes)
+                    chunks.Add (new Chunk (chunk_hash));
+
+                return chunks.ToArray ();
             }
         }
     }
 
 
-    public class Chunk {
+    public class Chunk : HashObject {
 
-        public string Hash;
+        public Chunk (string hash) : base (hash)
+        {
+        }
+
+
+        public byte [] Bytes {
+            get {
+                return ReadHashObject (Hash);
+            }
+        }
     }
 }

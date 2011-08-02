@@ -20,6 +20,8 @@ using System.IO;
 using System.Collections;
 using System.Text;
 
+using Rainbows.Objects;
+
 namespace Rainbows {
 
     // TODO: all methods here need to block
@@ -29,10 +31,23 @@ namespace Rainbows {
         public readonly string CheckoutPath;
 
 
+        public Commit Current {
+            get {
+                return null;
+            }
+
+            set {
+
+            }
+        }
+
+
         public Index (string database_path, string checkout_path)
         {
             DatabasePath = database_path;
             CheckoutPath = checkout_path;
+
+            HashObject.DatabasePath = DatabasePath;
         }
 
 
