@@ -65,7 +65,6 @@ namespace Rainbows.Objects {
     public class Commit : HashObject {
 
         public string ParentHash;
-
         public string UserName;
         public string UserEmail;
         public DateTime Timestamp;
@@ -170,6 +169,11 @@ namespace Rainbows.Objects {
         public byte [] Bytes {
             get {
                 return ReadHashObject (Hash);
+            }
+
+            set {
+                // Saving chunks is done by the Chunker,
+                // so we don't need to implement it
             }
         }
     }

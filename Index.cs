@@ -31,13 +31,19 @@ namespace Rainbows {
         public readonly string CheckoutPath;
 
 
-        public Commit Current {
+        public Commit Head {
             get {
-                return null;
+                string head_file_path = Path.Combine (DatabasePath, "HEAD");
+                string hash           = File.ReadAllText (head_file_path).Trim ();
+
+                return new Commit (hash);
             }
 
             set {
+                Commit head_commit    = value;
+                string head_file_path = Path.Combine (DatabasePath, "HEAD");
 
+                File.WriteAllText (head_file_path, head_commit.Hash);
             }
         }
 
@@ -117,9 +123,15 @@ namespace Rainbows {
         }
 
 
-        public void CollectGarbage ()
+        public void CollectGarbage (int days)
         {
             // TODO: Remove all objects that are not in the current HEAD and are older than a week
+        }
+
+
+        public static bool Clone (string url, string target_database_path)
+        {
+            return false;
         }
 
 
@@ -138,7 +150,7 @@ namespace Rainbows {
     }
 
 
-    // TODO: integrate into Index
+    // TODO: integrate into Objects
      public class Blobs {
 
         public readonly string OutputDirectory;
