@@ -83,6 +83,8 @@ namespace Rainbows {
                             string chunk_container_path = Path.Combine (OutputDirectory, chunk_container);
                             string chunk_file_path      = Path.Combine (chunk_container_path, chunk_file_name);
 
+                            // TODO: Calculate SHA1 hash of the full file here too
+
                             if (!File.Exists (chunk_file_path)) {
                                 if (!Directory.Exists (chunk_container_path))
                                     Directory.CreateDirectory (chunk_container_path);
@@ -98,7 +100,7 @@ namespace Rainbows {
 
                                 chunk_paths.Add (chunk_file_path);
 
-                                if (ChunkCreated != null)
+                                if (ChunkCreated != null) // TODO: return full file hash too
                                     ChunkCreated (chunk_file_path, current_chunk_size, hash);
 
                                 Console.WriteLine ("Chunk " + hash + " created");
@@ -110,7 +112,7 @@ namespace Rainbows {
                             chunk_number++;
                         }
 
-                    } catch (IOException exception) {
+                    } catch (IOException) {
                         foreach (string new_chunk_path in new_chunk_paths) {
                             if (File.Exists (new_chunk_path))
                                 File.Delete (new_chunk_path); // TODO: what to do with ongoing transfers?

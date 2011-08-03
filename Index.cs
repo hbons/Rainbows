@@ -90,6 +90,11 @@ namespace Rainbows {
         }
 
 
+        public void Status ()
+        {
+        }
+
+
         public void Checkout (string commit_hash)
         {
             Chunker chunker = new Chunker (DatabasePath,
