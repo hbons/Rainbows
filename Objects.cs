@@ -168,6 +168,7 @@ namespace Rainbows.Objects {
 
         public byte [] Bytes {
             get {
+                // TODO: return null if file doesn't exist so it can be downloaded
                 return ReadHashObject (Hash);
             }
 
