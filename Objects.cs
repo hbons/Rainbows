@@ -43,7 +43,7 @@ namespace Rainbows.Objects {
         }
 
 
-        protected void WriteHashObject (string hash, byte [] buffer)
+        protected void WriteHashObject (string hash, string lines)
         {
         }
 
@@ -80,6 +80,11 @@ namespace Rainbows.Objects {
             get {
                 return null;
             }
+
+            set {
+                Tree tree = value;
+                // WriteHashObject
+            }
         }
     }
 
@@ -100,6 +105,11 @@ namespace Rainbows.Objects {
             get {
                 return null;
             }
+
+            set {
+                Hashtable blobs = value;
+                // WriteHashObject
+            }
         }
 
 
@@ -108,6 +118,11 @@ namespace Rainbows.Objects {
         public Hashtable Trees {
             get {
                 return null;
+            }
+
+            set {
+                Hashtable trees = value;
+                // WriteHashObject
             }
         }
     }
@@ -130,6 +145,16 @@ namespace Rainbows.Objects {
                     chunks.Add (new Chunk (chunk_hash));
 
                 return chunks.ToArray ();
+            }
+
+            set {
+                Chunk [] chunks = value;
+
+                string lines = "";
+                foreach (Chunk chunk in chunks)
+                    lines += chunk + "\n";
+
+                WriteHashObject (Hash, lines);
             }
         }
     }
