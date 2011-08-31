@@ -53,9 +53,6 @@ namespace Rainbows {
             this.upload_process.StartInfo.UseShellExecute        = false;
             this.upload_process.StartInfo.WorkingDirectory       = database_path;
             this.upload_process.StartInfo.FileName               = "rsync";
-            this.upload_process.StartInfo.Arguments              = "--ignore-existing " +
-                "--bwlimit=" + BandwidthLimitKbps + " --recursive --whole-file --progress " +
-                "--exclude=HEAD " + DatabasePath + " " + RemotePath;
 
             this.download_process.EnableRaisingEvents              = true;
             this.download_process.StartInfo.RedirectStandardOutput = false;
@@ -67,6 +64,10 @@ namespace Rainbows {
 
         public void UploadObjects ()
         {
+            this.upload_process.StartInfo.Arguments              = "--ignore-existing " +
+                "--bwlimit=" + BandwidthLimitKbps + " --recursive --whole-file --progress " +
+                "--exclude=HEAD " + DatabasePath + " " + RemotePath;
+
             this.busy = true;
 
             this.upload_process.Start ();
