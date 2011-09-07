@@ -48,7 +48,7 @@ namespace Rainbows {
         }
 
 
-        public Index (string database_path, string checkout_path)
+        public Index (string database_path, string checkout_path, User user)
         {
             DatabasePath = database_path;
             CheckoutPath = checkout_path;
@@ -65,40 +65,60 @@ namespace Rainbows {
 
         public void Commit ()
         {
-            Chunker chunker = new Chunker (DatabasePath,
-                new Cryptographer ("cGFzc3dvcmQAAAAAAAAAAA=="));
+            Chunker chunker = new Chunker (DatabasePath);
+            chunker.ChunkCrypto = new Crypto ("cGFzc3dvcmQAAAAAAAAAAA==");
 
-            TransferManager transfer_manager = new TransferManager (
-                DatabasePath, "/Users/hbons/rsync-test");
+            // Tell the chunker to save in our database format
+            chunker.NameChunk = delegate (string chunk_file_name) {
+                string hash            = chunk_file_name;
+                string chunk_container = hash.Substring (0, 2);
+                string chunk_file_name = hash.Substring (2);
+
+                return Path.Combine (chunker.OutputDirectory, chunk_container, chunk_file_name);
+            };
+
+            // TransferManager transfer_manager = new TransferManager (
+            // DatabasePath, "/Users/hbons/rsync-test");
 
             chunker.ChunkCreated += delegate (string chunk_file_path, int chunk_size,
                                               string chunk_hash) {
-
-                transfer_manager.QueueUpload ();
+              // add hash to "todo" transfer list
+              transfer_manager.UploadObject (chunk_file_path);
+              // remove hash to "todo" transfer list
             };
-
-            chunker.ChunkingFinished += delegate {
-                transfer_manager.QueueUpload ();
-            };
-
 
             // TODO: needs to block
-            chunker.FileToChunks (new string [] {"/Users/hbons/hp2.avi"});
+            chunker.FileToChunks ("/Users/hbons/hp2.avi", 4 * 1024 * 1024);
 
             // TODO: Walk the new tree and create blobs, trees, commit
+            //
+            // foreach
+            //   Hashtable trees = new Hashtable ();
+            //   Hashtable blobs = new Hashtable ();
+            //   trees.Add ("", new Tree ());
+            //   blobs.Add ("", new Blob ());
+            // - Upload all trees and blobs
+            //   Tree tree = new Tree ("123456");
+            // transfer_manager.UploadObject ("12345");
+            //
+            // tree.Trees = trees;
+            // tree.Blobs = blobs;
+            //
+            // Commit commit    = new Commit ("abcdef");
+            // commit.Tree      = tree;
+            // commit.Author    = user.Name;
+            // commit.Email     = user.Email;
+            // commit.Timestamp = DateTime.UtcNow;
+            //
+            // transfer_manager.UploadObject ("abcdef");
             // - Update HEAD file
-        }
-
-
-        public void Status ()
-        {
         }
 
 
         public void Checkout (string commit_hash)
         {
-            Chunker chunker = new Chunker (DatabasePath,
-                new Cryptographer ("cGFzc3dvcmQAAAAAAAAAAA=="));
+            Chunker chunker = new Chunker (DatabasePath);
+            chunker.ChunkCrypto = new Crypto ("cGFzc3dvcmQAAAAAAAAAAA==");
 
             // TODO: walk the HEAD tree
             //chunker.ChunksToFile (chunks, path);
@@ -113,18 +133,28 @@ namespace Rainbows {
         }
 
 
-        public void PullAndRebase ()
+        public bool Pull ()
+        {
+            // TODO: 1. Get the latest HEAD commit from the server
+            // 2. Parse the tree and download all the objects we don't have
+            return true;
+        }
+
+
+        public bool Rebase ()
         {
             // TODO: 1. Get the latest HEAD commit from the server
             // 2. Parse the tree and download all the objects we don't have
 
-            TransferManager transfer_manager = new TransferManager (
-                DatabasePath, "/Users/hbons/rsync-test");
+           // TransferManager transfer_manager = new TransferManager (
+             //   DatabasePath, "/Users/hbons/rsync-test");
 
             string [] new_remote_objects = new string [0];
-            transfer_manager.DownloadObjects (new_remote_objects);
+            //foreach (string new_remote_object in new_remote_objects)
+               // transfer_manager.DownloadObject (new_remote_object);
 
             // TODO: rebase
+            return false;
         }
 
 
@@ -134,23 +164,12 @@ namespace Rainbows {
         }
 
 
-        public static bool Clone (string url, string target_database_path)
+        public static bool Init (Uri uri, string target_database_path)
         {
-            return false;
-        }
+            TransferManager transfer_manager = new TransferManager (target_database_path, uri);
+            transfer_manager.InitRepository ();
 
-
-        public static Index Init (string path)
-        {
-            if (!Directory.Exists (path))
-                Directory.CreateDirectory (path);
-
-            string database_path = Path.Combine (path, ".sparkleshare");
-
-            if (!Directory.Exists (database_path))
-                Directory.CreateDirectory (database_path);
-
-            return new Index (database_path, path);
+            return true;
         }
     }
 
@@ -174,7 +193,7 @@ namespace Rainbows {
         {
             // TODO: we really need the file hash
             string hash            = string.Join ("", chunk_hashes);
-            string file_store_name = Cryptographer.SHA1 (Encoding.ASCII.GetBytes (hash));
+            string file_store_name = Utils.SHA1 (Encoding.ASCII.GetBytes (hash));
 
             string file_store_container      = file_store_name.Substring (5, 2);
             string file_store_container_path = Path.Combine (OutputDirectory, file_store_container);

@@ -34,14 +34,26 @@
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
     <Compile Include="Main.cs" />
-    <Compile Include="Cryptographer.cs" />
     <Compile Include="Chunker.cs" />
     <Compile Include="Objects.cs" />
     <Compile Include="TransferManager.cs" />
     <Compile Include="Index.cs" />
+    <Compile Include="Utils.cs" />
+    <Compile Include="Crypto.cs" />
+    <Compile Include="Plugins\TransferPluginSftp.cs" />
+    <Compile Include="Plugins\TransferPlugin.cs" />
+    <Compile Include="ConnectionData.cs" />
+    <Compile Include="User.cs" />
+    <Compile Include="Exceptions.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System" />
-    <Reference Include="System.Xml" />
+    <Reference Include="Renci.SshNet, Version=0.1.0.0, Culture=neutral, PublicKeyToken=null">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>lib\Renci.SshNet.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Plugins\" />
   </ItemGroup>
 </Project>

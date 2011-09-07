@@ -20,7 +20,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
-using System.Xml;
+
+using Renci.SshNet;
+using Renci.SshNet.Sftp;
 
 namespace Rainbows {
 
@@ -28,11 +30,44 @@ namespace Rainbows {
 
         public static void Main (string [] args)
         {
-            Index index = new Index ("/Users/hbons/SparkleShare/Rainbows/.sparkleshare",
-                "/Users/hbons/SparkleShare/Rainbows");
+            User user = new User {
+                Name  = "Hylke Bons",
+                Email = "hylkebons@gmail.com"
+            };
 
-            index.Status ();
-            index.Commit ();
+            Index index = new Index ("/Users/hbons/SparkleShare/Rainbows/.sparkleshare",
+                "/Users/hbons/SparkleShare/Rainbows", user);
+
+            //index.Status ();
+            //index.Commit ();
+
+
+            //Index.Clone (new Uri ("ssh://bomahy@bomahy.nl/home/sites/webhosting/bomahy/bomahy/test.sparkleshare"),
+              //  "/home/hbons/TEST");
+
+            TransferManager t = new TransferManager ("/home/hbons/TEST/db",
+                new Uri ("ssh://bomahy@bomahy.nl/home/sites/webhosting/bomahy/bomahy/test.sparkleshare"));
+
+            t.UploadObject ("12124");
+            t.UploadObject ("12125");
+            t.UploadObject ("12126");
+            t.UploadObject ("12127");
+            t.UploadObject ("12128");
+            t.UploadObject ("12129");
+            t.UploadObject ("12130");
+            t.UploadObject ("12131");
+            t.UploadObject ("12132");
+            t.UploadObject ("12133");
+            t.UploadObject ("12134");
+            t.UploadObject ("12135");
+            t.UploadObject ("12136");
+            t.UploadObject ("12137");
+            t.UploadObject ("12138");
+            t.UploadObject ("12139");
+            t.UploadObject ("12140");
+            t.DownloadObject ("12126");
+
+
         }
     }
 }

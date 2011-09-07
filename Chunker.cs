@@ -21,6 +21,9 @@ using System.IO;
 
 namespace Rainbows {
 
+
+    // Also turns chunk objects into a file.
+    //
     public class Chunker {
 
         public string OutputDirectory;
@@ -28,104 +31,89 @@ namespace Rainbows {
         public delegate void ChunkCreatedHandler (string chunk_file_path, int chunk_size, string chunk_hash);
         public event ChunkCreatedHandler ChunkCreated;
 
-        public delegate void ChunkingFinishedHandler (string [] chunk_paths);
-        public event ChunkingFinishedHandler ChunkingFinished;
+        public Crypto ChunkCrypto;
 
-        private Cryptographer cryptographer;
+        public delegate string NameChunkDelegate (string chunk_file_name);
+        public NameChunkDelegate NameChunk = delegate (string chunk_file_name) {
+            return null;
+        };
 
 
         public Chunker (string output_directory)
         {
-            this.cryptographer = null;
-            this.Init (output_directory);
-        }
-
-
-        public Chunker (string output_directory, Cryptographer cryptographer)
-        {
-            this.cryptographer = cryptographer;
-            this.Init (output_directory);
-        }
-
-
-        private void Init (string output_directory)
-        {
-            OutputDirectory = Path.Combine (output_directory, "objects");
+            OutputDirectory = output_directory;
 
             if (!Directory.Exists (OutputDirectory))
                 Directory.CreateDirectory (OutputDirectory);
         }
 
 
-        public void FileToChunks (string [] source_file_paths)
+        // Turns files into chunk objects and stores them in the database.
+        public string FileToChunks (string source_file_path, int chunk_size)
         {
-            int chunk_size = 1024 * 1024 * 4;
             List <string> chunk_paths = new List<string> ();
 
-            // TODO: threadpool and block
-            foreach (string source_file_path in source_file_paths) {
+            using (FileStream stream = File.OpenRead (source_file_path))
+            {
+                stream.Lock (0, stream.Length);
+                List<string> new_chunk_paths = new List<string> ();
 
-                using (FileStream stream = File.OpenRead (source_file_path))
-                {
-                    stream.Lock (0, stream.Length);
-                    List<string> new_chunk_paths = new List<string> ();
+                try {
+                    int current_chunk_size       = 0;
+                    byte[] buffer                = new byte [chunk_size];
+                    int chunk_number             = 1;
 
-                    try {
-                        int current_chunk_size       = 0;
-                        var buffer                   = new byte [chunk_size];
-                        int chunk_number             = 1;
+                    while ((current_chunk_size = stream.Read (buffer, 0, buffer.Length)) > 0)
+                    {
+                        string hash                 = Utils.SHA1 (buffer);
+                        string chunk_file_path      = NameChunk (hash);
 
-                        while ((current_chunk_size = stream.Read (buffer, 0, buffer.Length)) > 0)
-                        {
-                            string hash                 = Cryptographer.SHA1 (buffer);
-                            string chunk_file_name      = hash.Substring (2);
-                            string chunk_container      = hash.Substring (0, 2);
-                            string chunk_container_path = Path.Combine (OutputDirectory, chunk_container);
-                            string chunk_file_path      = Path.Combine (chunk_container_path, chunk_file_name);
+                        if (chunk_file_path == null)
+                            chunk_file_path = Path.Combine (OutputDirectory, hash);
 
-                            // TODO: Calculate SHA1 hash of the full file here too
+                        string chunk_container_path = Path.GetDirectoryName (chunk_file_path);
 
-                            if (!File.Exists (chunk_file_path)) {
-                                if (!Directory.Exists (chunk_container_path))
-                                    Directory.CreateDirectory (chunk_container_path);
 
-                                if (this.cryptographer != null) {
-                                    byte [] crypto_buffer = this.cryptographer.Encrypt (buffer);
-                                    File.WriteAllBytes (chunk_file_path, crypto_buffer);
+                        // TODO: Calculate SHA1 hash of the full file here too
 
-                                } else {
-                                    File.WriteAllBytes (chunk_file_path, buffer);
-                                    new_chunk_paths.Add (chunk_file_path);
-                                }
+                        if (!File.Exists (chunk_file_path)) {
+                            if (!Directory.Exists (chunk_container_path))
+                                Directory.CreateDirectory (chunk_container_path);
 
-                                chunk_paths.Add (chunk_file_path);
-
-                                if (ChunkCreated != null) // TODO: return full file hash too
-                                    ChunkCreated (chunk_file_path, current_chunk_size, hash);
-
-                                Console.WriteLine ("Chunk " + hash + " created");
+                            if (ChunkCrypto != null) {
+                                byte [] crypto_buffer = ChunkCrypto.Encrypt (buffer);
+                                File.WriteAllBytes (chunk_file_path, crypto_buffer);
 
                             } else {
-                                Console.WriteLine ("Chunk " + hash + " exists");
+                                File.WriteAllBytes (chunk_file_path, buffer);
+                                new_chunk_paths.Add (chunk_file_path);
                             }
 
-                            chunk_number++;
+                            chunk_paths.Add (chunk_file_path);
+
+                            if (ChunkCreated != null) // TODO: return full file hash too
+                                ChunkCreated (chunk_file_path, current_chunk_size, hash);
+
+                            Console.WriteLine ("Chunk " + hash + " created");
+
+                        } else {
+                            Console.WriteLine ("Chunk " + hash + " exists");
                         }
 
-                    } catch (IOException) {
-                        foreach (string new_chunk_path in new_chunk_paths) {
-                            if (File.Exists (new_chunk_path))
-                                File.Delete (new_chunk_path); // TODO: what to do with ongoing transfers?
-                        }
-
-                    } finally {
-                        stream.Unlock (0, stream.Length);
+                        chunk_number++;
                     }
+
+                } catch (IOException) {
+                    foreach (string new_chunk_path in new_chunk_paths) {
+                        if (File.Exists (new_chunk_path))
+                            File.Delete (new_chunk_path); // TODO: what to do with ongoing transfers?
+                    }
+
+                } finally {
+                    stream.Unlock (0, stream.Length);
+                    return ""; // Full hash
                 }
             }
-
-            if (ChunkingFinished != null)
-                ChunkingFinished (chunk_paths.ToArray ());
         }
 
 
@@ -139,8 +127,8 @@ namespace Rainbows {
                 foreach (string chunk_path in chunk_file_paths) {
                     buffer = File.ReadAllBytes (chunk_path);
 
-                    if (this.cryptographer != null)
-                        buffer = this.cryptographer.Decrypt (buffer);
+                    if (ChunkCrypto != null)
+                        buffer = ChunkCrypto.Decrypt (buffer);
 
                     stream.Write (buffer, 0, buffer.Length);
                 }

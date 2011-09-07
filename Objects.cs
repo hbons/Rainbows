@@ -39,7 +39,12 @@ namespace Rainbows.Objects {
             string file_path = Path.Combine (DatabasePath, "objects",
                 hash.Substring (0, 2), hash.Substring (2));
 
-            return File.ReadAllBytes (file_path);;
+            try {
+                return File.ReadAllBytes (file_path);
+
+            } catch (IOException) {
+                return null;
+            }
         }
 
 
@@ -65,8 +70,8 @@ namespace Rainbows.Objects {
     public class Commit : HashObject {
 
         public string ParentHash;
-        public string UserName;
-        public string UserEmail;
+        public string Author;
+        public string Email;
         public DateTime Timestamp;
 
 
@@ -90,38 +95,66 @@ namespace Rainbows.Objects {
 
     public class Tree : HashObject {
 
-        public string Path;
-
 
         public Tree (string hash) : base (hash)
         {
         }
 
 
-        // Key:   blob hash
-        // Value: file name
-        public Hashtable Blobs {
-            get {
-                return null;
-            }
-
-            set {
-                Hashtable blobs = value;
-                // WriteHashObject
-            }
-        }
-
-
-        // Key:   tree hash
-        // Value: folder name
         public Hashtable Trees {
             get {
-                return null;
+                Hashtable trees = new Hashtable ();
+
+                byte [] buffer  = ReadHashObject (Hash);
+                string [] lines = ToLines (buffer);
+
+                foreach (string line in lines) {
+                    string [] columns = line.Split (" ".ToCharArray ());
+                    string hash = columns [0];
+                    string name = columns [1];
+
+                    if (name.EndsWith ("/"))
+                        trees.Add (name, new Tree (hash));
+                }
+
+                if (trees.Count > 0)
+                    return trees;
+                else
+                    return null;
             }
 
             set {
-                Hashtable trees = value;
-                // WriteHashObject
+                IDictionaryEnumerator dictionary = value.GetEnumerator ();
+                List<string> names = new List<string> ();
+                List<Tree> trees   = new List<Tree> ();
+
+                while (dictionary.MoveNext ()) {
+                    string name = (string) dictionary.Key;
+                    Tree tree   = (Tree) dictionary.Value;
+
+                    names.Add (name);
+                    trees.Add (tree);
+                }
+
+                byte [] buffer = ReadHashObject (Hash);
+                List<string> lines;
+
+                if (buffer == null) {
+                    lines = new List<string> ();
+
+                    // write trees
+
+                } else {
+                    lines = new List<string> (ToLines (buffer));
+
+                    for (int i = 0; i < names.Count; i++) {
+                        string line = trees [i].Hash + " " + names [i] + "\n";
+                        lines.Add (line);
+                    }
+                    // append trees
+                }
+
+                WriteHashObject (Hash, string.Join ("", lines.ToArray ()));
             }
         }
     }

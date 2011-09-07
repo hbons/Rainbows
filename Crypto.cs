@@ -21,7 +21,7 @@ using System.Text;
 
 namespace Rainbows {
 
-    public class Cryptographer {
+    public class Crypto {
 
         private RijndaelManaged aes = new RijndaelManaged () {
             KeySize   = 256,
@@ -31,7 +31,7 @@ namespace Rainbows {
         };
 
 
-        public Cryptographer (string password)
+        public Crypto (string password)
         {
             this.aes.IV  = Convert.FromBase64String (password);
             this.aes.Key = Convert.FromBase64String (password);
@@ -49,15 +49,6 @@ namespace Rainbows {
         {
             ICryptoTransform crypto = this.aes.CreateDecryptor ();
             return crypto.TransformFinalBlock (buffer, 0, buffer.Length);
-        }
-
-
-        // Creates a SHA-1 hash of input
-        public static string SHA1 (byte [] buffer)
-        {
-            SHA1 sha1             = new SHA1CryptoServiceProvider ();
-            byte [] encoded_bytes = sha1.ComputeHash (buffer);
-            return BitConverter.ToString (encoded_bytes).ToLower ().Replace ("-", "");
         }
     }
 }
