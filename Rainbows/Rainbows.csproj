@@ -45,7 +45,7 @@
     <Compile Include="ConnectionData.cs" />
     <Compile Include="User.cs" />
     <Compile Include="Exceptions.cs" />
-    <Compile Include="Cache.cs" />
+    <Compile Include="Status.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System" />

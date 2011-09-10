@@ -20,19 +20,19 @@ using System.IO;
 
 namespace Rainbows {
 
-    public class Cache {
+    public class Status {
 
         public string [] Missing;
         public string [] Modified;
         public string [] New;
 
 
-        public Cache (string cache_file_path)
+        public Status (string cache_file_path)
         {
         }
 
 
-        public void Update ()
+        public void UpdateCache ()
         {
         }
 
@@ -43,7 +43,7 @@ namespace Rainbows {
         }
 
 
-        public static void Create (string cache_file_path)
+        public static void CreateCache (string cache_file_path)
         {
             string parent_path = Path.GetDirectoryName (cache_file_path);
 
