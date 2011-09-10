@@ -20,33 +20,37 @@ using System.IO;
 
 namespace Rainbows {
 
-    public class Status {
+    public class Cache {
 
-        private Cache cache;
-
-
-        public string [] Missing {
-            get {
-
-            }
-        }
-
-        public string [] Modified {
-            get {
-
-            }
-        }
-
-        public string [] New {
-            get {
-
-            }
-        }
+        public readonly string Path;
 
 
-        public Status (Cache cache, string path)
+        public Cache (string cache_file_path)
         {
-            this.cache = cache;
+            Path = cache_file_path;
+        }
+
+
+        public void Update ()
+        {
+
+        }
+
+
+        public static Cache Create (string cache_file_path)
+        {
+            string parent_path = Path.GetDirectoryName (cache_file_path);
+
+            if (File.Exists (cache_file_path))
+                File.Delete (cache_file_path);
+
+            if (!Directory.Exists (parent_path))
+                Directory.CreateDirectory (parent_path);
+
+            File.Create (cache_file_path);
+
+            return new Cache (cache_file_path);
         }
     }
 }
+

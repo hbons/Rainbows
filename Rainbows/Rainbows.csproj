@@ -46,6 +46,7 @@
     <Compile Include="User.cs" />
     <Compile Include="Exceptions.cs" />
     <Compile Include="Status.cs" />
+    <Compile Include="Cache.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System" />
