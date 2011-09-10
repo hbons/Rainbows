@@ -43,26 +43,36 @@ namespace Rainbows.Objects {
                 return File.ReadAllBytes (file_path);
 
             } catch (IOException) {
+                Utils.Log ("Could not read object " + hash);
                 return null;
             }
         }
 
 
-        protected void WriteHashObject (string hash, string lines)
+        public static void WriteHashObject (string hash, byte [] buffer)
         {
+            string file_path = Path.Combine (DatabasePath, "objects",
+                hash.Substring (0, 2), hash.Substring (2));
+
+            try {
+                File.WriteAllBytes (file_path, buffer);
+
+            } catch (IOException) {
+                Utils.Log ("Could not write object " + hash);
+            }
         }
 
 
-        protected string [] ToLines (byte [] buffer)
+        public static string [] ToLines (byte [] buffer)
         {
             string line = ASCIIEncoding.ASCII.GetString (buffer);
             return line.Split ("\n".ToCharArray (), StringSplitOptions.RemoveEmptyEntries);
         }
 
 
-        protected byte [] ToBytes (string line)
+        public static byte [] ToBytes (string line)
         {
-            return ASCIIEncoding.ASCII.GetBytes (line);
+            return UnicodeEncoding.Unicode.GetBytes (line);
         }
     }
 
@@ -80,21 +90,34 @@ namespace Rainbows.Objects {
         }
 
 
-        public Tree Tree {
+        public Tree Root {
             get {
-                return null;
-            }
+                byte [] buffer = ReadHashObject (Hash);
+                string line    = ToLines (buffer) [0];
+                string hash    = line.Substring (0, line.IndexOf (" "));
 
-            set {
-                Tree tree = value;
-                // WriteHashObject
+                return new Tree (hash);
             }
+        }
+
+
+        public static Commit Write (User author, DateTime timestamp,
+            Commit parent, Tree root)
+        {
+            int seconds_since_epoch = (int) (timestamp - new DateTime (1970, 1, 1)).TotalSeconds;
+
+            string line = root.Hash + " " + seconds_since_epoch + " " +
+                author.Name + " " + "<" + author.Email + ">" + "\n";
+
+            string hash = Utils.SHA1 (line);
+            HashObject.WriteHashObject (hash, ToBytes (line));
+
+            return new Commit (hash);
         }
     }
 
 
     public class Tree : HashObject {
-
 
         public Tree (string hash) : base (hash)
         {
@@ -110,52 +133,66 @@ namespace Rainbows.Objects {
 
                 foreach (string line in lines) {
                     string [] columns = line.Split (" ".ToCharArray ());
-                    string hash = columns [0];
-                    string name = columns [1];
+                    string name       = columns [1];
 
-                    if (name.EndsWith ("/"))
+                    if (name.EndsWith ("/")) {
+                        string hash = columns [0];
                         trees.Add (name, new Tree (hash));
+                    }
                 }
 
-                if (trees.Count > 0)
-                    return trees;
-                else
-                    return null;
+                return trees;
             }
+         }
 
-            set {
-                IDictionaryEnumerator dictionary = value.GetEnumerator ();
-                List<string> names = new List<string> ();
-                List<Tree> trees   = new List<Tree> ();
 
-                while (dictionary.MoveNext ()) {
-                    string name = (string) dictionary.Key;
-                    Tree tree   = (Tree) dictionary.Value;
+        public Hashtable Blobs {
+            get {
+                Hashtable blobs = new Hashtable ();
 
-                    names.Add (name);
-                    trees.Add (tree);
+                byte [] buffer  = ReadHashObject (Hash);
+                string [] lines = ToLines (buffer);
+
+                foreach (string line in lines) {
+                    string [] columns = line.Split (" ".ToCharArray ());
+                    string name       = columns [1];
+
+                    if (!name.EndsWith ("/")) {
+                        string hash = columns [0];
+                        blobs.Add (name, new Blob (hash));
+                    }
                 }
 
-                byte [] buffer = ReadHashObject (Hash);
-                List<string> lines;
+                return blobs;
+            }
+         }
 
-                if (buffer == null) {
-                    lines = new List<string> ();
 
-                    // write trees
+         public static Tree Write (Hashtable trees_and_blobs)
+         {
+            IDictionaryEnumerator dictionary = trees_and_blobs.GetEnumerator ();
+            string tree_lines = "";
+            string blob_lines = "";
+
+            while (dictionary.MoveNext ()) {
+                string name = (string) dictionary.Key;
+
+                if (name.EndsWith ("/")) {
+                    Tree tree = (Tree) dictionary.Value;
+                    tree_lines += tree.Hash + " " + name + "\n";
 
                 } else {
-                    lines = new List<string> (ToLines (buffer));
-
-                    for (int i = 0; i < names.Count; i++) {
-                        string line = trees [i].Hash + " " + names [i] + "\n";
-                        lines.Add (line);
-                    }
-                    // append trees
+                    Blob blob = (Blob) dictionary.Value;
+                    blob_lines += blob.Hash + " " + name + "\n";
                 }
-
-                WriteHashObject (Hash, string.Join ("", lines.ToArray ()));
             }
+
+            string lines = tree_lines + blob_lines;
+
+            string hash = Utils.SHA1 (lines);
+            HashObject.WriteHashObject (hash, ToBytes (lines));
+
+            return new Tree (hash);
         }
     }
 
@@ -178,16 +215,20 @@ namespace Rainbows.Objects {
 
                 return chunks.ToArray ();
             }
+        }
 
-            set {
-                Chunk [] chunks = value;
 
-                string lines = "";
-                foreach (Chunk chunk in chunks)
-                    lines += chunk + "\n";
+        public static Blob Write (Chunk [] chunks)
+        {
+            string lines = "";
 
-                WriteHashObject (Hash, lines);
-            }
+            foreach (Chunk chunk in chunks)
+                lines += chunk.Hash + "\n";
+
+            string hash = Utils.SHA1 (lines);
+            HashObject.WriteHashObject (hash, ToBytes (lines));
+
+            return new Blob (hash);
         }
     }
 
@@ -201,8 +242,12 @@ namespace Rainbows.Objects {
 
         public byte [] Bytes {
             get {
-                // TODO: return null if file doesn't exist so it can be downloaded
-                return ReadHashObject (Hash);
+                byte [] buffer = ReadHashObject (Hash);
+
+                if (buffer != null)
+                    return buffer;
+                else
+                    return null;
             }
 
             set {

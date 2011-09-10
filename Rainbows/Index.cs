@@ -72,7 +72,7 @@ namespace Rainbows {
             chunker.NameChunk = delegate (string chunk_file_name) {
                 string hash            = chunk_file_name;
                 string chunk_container = hash.Substring (0, 2);
-                string chunk_file_name = hash.Substring (2);
+                chunk_file_name        = hash.Substring (2);
 
                 return Path.Combine (chunker.OutputDirectory, chunk_container, chunk_file_name);
             };
@@ -83,7 +83,7 @@ namespace Rainbows {
             chunker.ChunkCreated += delegate (string chunk_file_path, int chunk_size,
                                               string chunk_hash) {
               // add hash to "todo" transfer list
-              transfer_manager.UploadObject (chunk_file_path);
+              //transfer_manager.UploadObject (chunk_file_path);
               // remove hash to "todo" transfer list
             };
 

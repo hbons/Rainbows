@@ -111,8 +111,9 @@ namespace Rainbows {
 
                 } finally {
                     stream.Unlock (0, stream.Length);
-                    return ""; // Full hash
                 }
+                
+                return ""; // Full hash
             }
         }
 

@@ -32,11 +32,21 @@ namespace Rainbows {
         }
 
 
-        // Creates a SHA-1 hash of input
         public static string SHA1 (byte [] buffer)
         {
             SHA1 sha1             = new SHA1CryptoServiceProvider ();
             byte [] encoded_bytes = sha1.ComputeHash (buffer);
+
+            return BitConverter.ToString (encoded_bytes).ToLower ().Replace ("-", "");
+        }
+
+
+        public static string SHA1 (string s)
+        {
+            byte [] buffer        = UnicodeEncoding.UTF8.GetBytes (s);
+            SHA1 sha1             = new SHA1CryptoServiceProvider ();
+            byte [] encoded_bytes = sha1.ComputeHash (buffer);
+
             return BitConverter.ToString (encoded_bytes).ToLower ().Replace ("-", "");
         }
     }
