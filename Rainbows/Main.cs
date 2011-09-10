@@ -30,6 +30,13 @@ namespace Rainbows {
 
         public static void Main (string [] args)
         {
+
+            Console.WriteLine (File.GetLastWriteTimeUtc ("/home/hbons/test.txt").GetHashCode ());
+            Environment.Exit (0);
+
+
+
+
             User user = new User {
                 Name  = "Hylke Bons",
                 Email = "hylkebons@gmail.com"

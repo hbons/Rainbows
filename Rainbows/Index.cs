@@ -59,7 +59,7 @@ namespace Rainbows {
 
         public void Status ()
         {
-            // TODO compare the checkout with the HEAD tree
+            // TODO compare the checkout with the cache
         }
 
 
@@ -87,8 +87,30 @@ namespace Rainbows {
               // remove hash to "todo" transfer list
             };
 
+
+            //chunker.Finished += delegate (Chunk [] chunks) {
+              //  Blob blob = Blob.Write (chunks);
+            //};
+
             // TODO: needs to block
+
+
             chunker.FileToChunks ("/Users/hbons/hp2.avi", 4 * 1024 * 1024);
+
+            User author = new User { Name = "Hylke Bons", Email = "hylkebons@gmail.com" };
+
+
+
+
+
+
+
+
+
+
+
+
+            Objects.Commit.Write (author, DateTime.UtcNow, Head, null);
 
             // TODO: Walk the new tree and create blobs, trees, commit
             //
@@ -122,6 +144,8 @@ namespace Rainbows {
 
             // TODO: walk the HEAD tree
             //chunker.ChunksToFile (chunks, path);
+
+            // TODO: write cache
         }
 
 

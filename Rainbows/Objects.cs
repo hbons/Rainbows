@@ -28,13 +28,14 @@ namespace Rainbows.Objects {
         public static string DatabasePath;
         public string Hash;
 
+
         public HashObject (string hash)
         {
             Hash = hash;
         }
 
 
-        protected byte [] ReadHashObject (string hash)
+        protected static byte [] ReadHashObject (string hash)
         {
             string file_path = Path.Combine (DatabasePath, "objects",
                 hash.Substring (0, 2), hash.Substring (2));
@@ -51,8 +52,13 @@ namespace Rainbows.Objects {
 
         public static void WriteHashObject (string hash, byte [] buffer)
         {
-            string file_path = Path.Combine (DatabasePath, "objects",
-                hash.Substring (0, 2), hash.Substring (2));
+            string container_path = Path.Combine (DatabasePath, "objects",
+                hash.Substring (0, 2));
+
+            string file_path = Path.Combine (container_path, hash.Substring (2));
+
+            if (!Directory.Exists (container_path))
+                Directory.CreateDirectory (container_path);
 
             try {
                 File.WriteAllBytes (file_path, buffer);
@@ -106,7 +112,7 @@ namespace Rainbows.Objects {
         {
             int seconds_since_epoch = (int) (timestamp - new DateTime (1970, 1, 1)).TotalSeconds;
 
-            string line = root.Hash + " " + seconds_since_epoch + " " +
+            string line = root.Hash + " " + parent.Hash + " " + seconds_since_epoch + " " +
                 author.Name + " " + "<" + author.Email + ">" + "\n";
 
             string hash = Utils.SHA1 (line);
