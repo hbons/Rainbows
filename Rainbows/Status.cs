@@ -27,19 +27,19 @@ namespace Rainbows {
 
         public string [] Missing {
             get {
-
+                return Missing;
             }
         }
 
         public string [] Modified {
             get {
-
+                return Modified;
             }
         }
 
         public string [] New {
             get {
-
+                return New;
             }
         }
 
