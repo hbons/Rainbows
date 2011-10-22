@@ -22,12 +22,12 @@ namespace Rainbows {
 
     public class Cache {
 
-        public readonly string Path;
+        public readonly string path;
 
 
         public Cache (string cache_file_path)
         {
-            Path = cache_file_path;
+            path = cache_file_path;
         }
 
 
